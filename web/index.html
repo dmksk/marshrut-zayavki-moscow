@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102a43">
+  <title>Маршрут заявки · Москва</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">М<span>→</span></span><div><strong>Маршрут<br>заявки</strong><small>Москва · ЖКХ</small></div></div>
+      <div class="side-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+      <nav aria-label="Разделы">
+        <button class="nav-item active" data-view="resident"><span class="nav-icon">⌂</span> Жителю <span class="nav-arrow">›</span></button>
+        <button class="nav-item" data-view="dispatcher"><span class="nav-icon">▤</span> Диспетчеру <span class="nav-arrow">›</span></button>
+        <button class="nav-item" data-view="max"><span class="nav-icon">✳</span> Бот MAX <span class="nav-arrow">›</span></button>
+      </nav>
+      <div class="side-bottom"><span class="live-dot"></span> Локальное демо<br><small>Без отправки в городские системы</small></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><div><span class="eyebrow">ГОРОДСКИЕ СЕРВИСЫ / ДЕМО</span><h1 id="pageTitle">Проблема дома? Разберёмся.</h1></div><span class="city-pill">📍 Москва</span></header>
+
+      <section id="residentView" class="view active">
+        <div class="intro-row"><p>Опишите ситуацию своими словами. Модель определит тему, а правила подскажут, куда направить заявку и что сделать сейчас.</p><span class="step-pill">01 / 03 · Опишите проблему</span></div>
+        <div class="resident-grid">
+          <section class="panel form-panel">
+            <div class="panel-heading"><span class="number">01</span><div><h2>Новая заявка</h2><p>Несколько коротких уточнений для правильного маршрута</p></div></div>
+            <label class="field-label" for="house">Выберите дом</label>
+            <select id="house" class="input"></select>
+            <label class="field-label" for="description">Что произошло?</label>
+            <textarea id="description" class="input textarea" maxlength="1500" placeholder="Например: в подъезде не горит свет на 3-м этаже уже второй день"></textarea>
+            <div class="example-row"><span>Попробуйте:</span><button type="button" class="example" data-example="В подъезде не горит свет на третьем этаже">Темно в подъезде</button><button type="button" class="example" data-example="Во дворе после снегопада не очистили дорожку">Снег во дворе</button></div>
+            <div class="field-group"><label class="field-label" for="location">Где проблема?</label><select id="location" class="input"><option value="">Выберите место</option><option>квартира</option><option>подъезд</option><option>двор</option><option>улица</option></select></div>
+            <div class="field-group"><label class="field-label" for="danger">Есть опасность для людей?</label><select id="danger" class="input"><option value="">Выберите ответ</option><option>нет</option><option>да</option><option>не знаю</option></select></div>
+            <div class="field-group hidden" id="territoryGroup"><label class="field-label" for="territory">Чья территория?</label><select id="territory" class="input"><option value="">Выберите ответ</option><option value="территория дома">Дома</option><option value="городская">Городская</option><option value="не знаю">Не знаю</option></select></div>
+            <div class="field-group hidden" id="manualGroup"><label class="field-label" for="manualCategory">Уточните тему</label><select id="manualCategory" class="input"><option value="">Выберите тему</option><option value="leak">Протечка</option><option value="lift">Лифт</option><option value="heating">Отопление и горячая вода</option><option value="entrance_electricity">Свет в подъезде</option><option value="trash">Мусор</option><option value="yard">Двор</option></select></div>
+            <label class="upload" for="photo"><span class="upload-icon">＋</span><span><strong>Добавить фото</strong><small>PNG или JPEG, до 3 МБ · по желанию</small></span><span id="fileName" class="upload-name">Не выбрано</span></label><input id="photo" type="file" accept="image/png,image/jpeg" hidden>
+            <div class="button-row"><button id="triageBtn" class="primary-btn" type="button">Определить маршрут <span>↗</span></button><button id="createBtn" class="secondary-btn" type="button" disabled>Создать заявку</button></div>
+            <div id="formMessage" class="form-message" role="status"></div>
+          </section>
+
+          <div class="right-column">
+            <section class="panel route-panel"><div class="panel-heading"><span class="number muted">02</span><div><h2>Маршрут обращения</h2><p>Кто принимает и что делать дальше</p></div></div><div id="routeContent" class="empty-route"><span class="route-art">↗</span><strong>Пока здесь пусто</strong><p>Заполните заявку слева — маршрут появится здесь.</p></div></section>
+            <section class="panel ticket-panel"><div class="panel-heading"><span class="number muted">03</span><div><h2>Статус заявки</h2><p>Следите за выполнением в демо-режиме</p></div></div><div id="ticketContent" class="empty-ticket">После создания заявки здесь появятся её номер и история.</div></section>
+          </div>
+        </div>
+        <div class="disclaimer"><span>ⓘ</span> Демо-модель обучена на 6 000 синтетических примерах. Решение о реальном адресате и сроке принимает официальный канал после регистрации обращения.</div>
+      </section>
+
+      <section id="dispatcherView" class="view">
+        <div class="intro-row"><p>Тестовый кабинет управляющей организации: меняйте статусы и проверяйте путь заявки от обращения до выполнения.</p><span class="step-pill">ДЕМО · Кабинет УК</span></div>
+        <div class="stat-grid"><div class="stat"><span>Всего заявок</span><strong id="statTotal">0</strong><small>в демо-кабинете</small></div><div class="stat"><span>Принято</span><strong id="statAccepted">0</strong><small>ожидают назначения</small></div><div class="stat"><span>В работе</span><strong id="statAssigned">0</strong><small>назначен исполнитель</small></div><div class="stat"><span>Выполнено</span><strong id="statDone">0</strong><small>закрыты в демо</small></div></div>
+        <section class="panel dashboard-panel"><div class="dashboard-head"><div><h2>Очередь заявок</h2><p>Статусы меняются по порядку: принято → назначен исполнитель → выполнено</p></div><button id="refreshBtn" class="ghost-btn" type="button">↻ Обновить</button></div><label class="admin-label" for="adminKey">Ключ демо-диспетчера <input id="adminKey" type="password" placeholder="Значение APP_ADMIN_KEY"></label><div id="ticketList" class="ticket-list"></div></section>
+      </section>
+
+      <section id="maxView" class="view">
+        <div class="intro-row"><p>Пройдите тот же сценарий как в MAX. Симулятор использует настоящий движок диалога и локальную базу заявок, но не требует токена бота.</p><span class="step-pill">ИНТЕГРАЦИЯ · MAX API</span></div>
+        <div class="max-grid"><section class="panel chat-panel"><div class="chat-head"><span class="avatar">М→</span><div><strong>Маршрут заявки</strong><small><span class="live-dot"></span> Демо-бот</small></div></div><div id="chatMessages" class="chat-messages"><div class="bubble bot">Привет! Напишите <b>/start</b>, чтобы оформить заявку.</div></div><div class="chat-input-row"><input id="chatInput" class="input" placeholder="Напишите сообщение…" aria-label="Сообщение боту"><button id="chatSend" class="primary-btn" type="button">Отправить ↗</button></div></section><section class="panel max-info"><span class="max-kicker">ПОД КАПОТОМ</span><h2>Один сценарий.<br>Два интерфейса.</h2><p>Веб-форма и бот используют одну модель, одни правила безопасности и одну базу заявок.</p><div class="max-info-line"><span>01</span> Выбор дома</div><div class="max-info-line"><span>02</span> Короткие уточнения</div><div class="max-info-line"><span>03</span> Карточка маршрута</div><div class="max-info-line"><span>04</span> Номер и статус</div><div class="mini-note">Для реального MAX нужен токен и HTTPS webhook. Инструкции есть в README репозитория.</div></section></div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
