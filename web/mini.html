@@ -3,55 +3,91 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b3044">
-  <title>Маршрут заявки · MAX</title>
+  <meta name="theme-color" content="#f3f7f6">
+  <title>Маршрут заявки · Москва</title>
   <link rel="stylesheet" href="/mini.css">
   <script src="https://st.max.ru/js/max-web-app.js"></script>
   <script src="/mini.js" defer></script>
 </head>
 <body>
-  <main class="app">
-    <header class="hero">
-      <div class="brand"><span class="mark">М<span>→</span></span><div><strong>Маршрут заявки</strong><small>Москва · ЖКХ</small></div></div>
-      <span class="hero-label">МИНИ-ПРИЛОЖЕНИЕ В MAX</span>
-      <h1>Проблема дома?<br><em>Разберёмся.</em></h1>
-      <p>Ответьте на несколько вопросов — подскажем, куда обратиться и что сделать сейчас.</p>
-      <div class="hero-art" aria-hidden="true"><span>⌂</span><span>↗</span><span>✓</span></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="brand-copy"><strong>Маршрут заявки</strong><span>Помощь с ЖКХ в Москве</span></div>
+      <span class="demo-pill">ДЕМО</span>
     </header>
+    <div id="connection" class="connection" role="status">Проверяем подключение…</div>
+    <div id="emergency" class="emergency" role="alert" hidden>
+      <div class="emergency-icon" aria-hidden="true">!</div>
+      <div><strong>Сначала безопасность</strong><p id="emergencyText"></p><a href="tel:112" class="emergency-call">Позвонить 112 <span aria-hidden="true">↗</span></a></div>
+    </div>
 
-    <nav class="tabs" aria-label="Разделы">
-      <button class="tab active" data-tab="new" type="button">＋ Новая заявка</button>
-      <button class="tab" data-tab="mine" type="button">▤ Мои заявки</button>
-    </nav>
+    <main>
+      <section id="newTab" aria-label="Новая заявка">
+        <div class="intro"><div class="intro-eyebrow">МОСКВА / ПОНЯТНЫЙ МАРШРУТ</div><h1>Что случилось<br><span>в вашем доме?</span></h1><p>Ответьте на несколько вопросов. Покажем, куда обратиться и что сделать сейчас.</p></div>
+        <div id="wizard" class="sheet">
+          <div class="progress-copy"><span id="stepCount">Шаг 1 из 4</span><span id="stepTime">Около минуты</span></div>
+          <div id="progressBar" class="progress-track" role="progressbar" aria-label="Прогресс заявки" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1"><span></span></div>
 
-    <div id="connection" class="connection" role="status">Проверяем подключение к MAX…</div>
+          <section class="step" data-step="0" aria-labelledby="stepTitle0">
+            <div class="step-icon" aria-hidden="true">01</div><h2 id="stepTitle0" tabindex="-1">Расскажите о проблеме</h2><p class="step-help">Адреса ниже вымышлены и нужны только для демонстрации.</p>
+            <label class="field" for="house"><span>Ваш дом</span><select id="house" required><option value="">Загружаем дома…</option></select></label>
+            <label class="field" for="description"><span>Что произошло?</span><textarea id="description" maxlength="1500" rows="4" placeholder="Например: в подъезде на третьем этаже не горит свет" required></textarea></label>
+            <div class="examples" aria-label="Примеры описаний"><span>Попробовать пример</span><button type="button" data-example="В подъезде не горит свет на третьем этаже">Нет света</button><button type="button" data-example="Во дворе после снегопада не очистили дорожку">Снег во дворе</button></div>
+          </section>
 
-    <section id="newTab" class="tab-panel active" aria-label="Новая заявка">
-      <div class="section-title"><span>01</span><div><h2>Расскажите о проблеме</h2><p>Адреса и организации в этом демо вымышлены</p></div></div>
-      <label class="field"><span>Ваш дом</span><select id="house"></select></label>
-      <label class="field"><span>Что произошло?</span><textarea id="description" maxlength="1500" placeholder="Например: в подъезде не горит свет на третьем этаже"></textarea></label>
-      <div class="examples"><span>Примеры:</span><button type="button" data-example="В подъезде не горит свет на третьем этаже">Нет света</button><button type="button" data-example="Во дворе после снегопада не очистили дорожку">Снег во дворе</button></div>
-      <div class="field-pair">
-        <label class="field"><span>Где проблема?</span><select id="location"><option value="">Выберите</option><option>квартира</option><option>подъезд</option><option>двор</option><option>улица</option></select></label>
-        <label class="field"><span>Есть опасность?</span><select id="danger"><option value="">Выберите</option><option>нет</option><option>да</option><option>не знаю</option></select></label>
-      </div>
-      <label id="territoryField" class="field hidden"><span>Чья территория?</span><select id="territory"><option value="">Выберите</option><option value="территория дома">Дома</option><option value="городская">Городская</option><option value="не знаю">Не знаю</option></select></label>
-      <label id="categoryField" class="field hidden"><span>Уточните тему</span><select id="category"><option value="">Выберите</option><option value="leak">Протечка</option><option value="lift">Лифт</option><option value="heating">Отопление</option><option value="entrance_electricity">Свет в подъезде</option><option value="trash">Мусор</option><option value="yard">Двор</option></select></label>
-      <label class="photo" for="photo"><span class="photo-icon">＋</span><span><strong>Добавить фото</strong><small>По желанию · JPG или PNG, до 3 МБ</small></span><b id="photoName">→</b></label><input id="photo" type="file" accept="image/png,image/jpeg" hidden>
-      <button id="triageButton" class="button primary" type="button">Определить маршрут <span>↗</span></button>
-      <div id="message" class="message" role="status"></div>
+          <section class="step" data-step="1" aria-labelledby="stepTitle1" hidden>
+            <div class="step-icon" aria-hidden="true">02</div><h2 id="stepTitle1" tabindex="-1">Где возникла проблема?</h2><p class="step-help">Это поможет отличить вопрос по дому от городского.</p>
+            <fieldset class="choices"><legend class="sr-only">Место проблемы</legend>
+              <label class="choice"><input type="radio" name="location" value="квартира"><span class="choice-symbol" aria-hidden="true">⌂</span><span>В квартире</span><span class="choice-check" aria-hidden="true"></span></label>
+              <label class="choice"><input type="radio" name="location" value="подъезд"><span class="choice-symbol" aria-hidden="true">▥</span><span>В подъезде</span><span class="choice-check" aria-hidden="true"></span></label>
+              <label class="choice"><input type="radio" name="location" value="двор"><span class="choice-symbol" aria-hidden="true">♧</span><span>Во дворе</span><span class="choice-check" aria-hidden="true"></span></label>
+              <label class="choice"><input type="radio" name="location" value="улица"><span class="choice-symbol" aria-hidden="true">↗</span><span>На улице</span><span class="choice-check" aria-hidden="true"></span></label>
+            </fieldset>
+          </section>
 
-      <section id="route" class="route hidden" aria-live="polite"></section>
-      <button id="createButton" class="button create hidden" type="button">Создать демо-заявку <span>↗</span></button>
-      <section id="created" class="created hidden" aria-live="polite"></section>
-      <p class="footnote">Маршрут — подсказка. Заявка хранится только в демо-системе и не отправляется в ЕДЦ, УК или городские службы.</p>
-    </section>
+          <section class="step" data-step="2" aria-labelledby="stepTitle2" hidden>
+            <div class="step-icon" aria-hidden="true">03</div><h2 id="stepTitle2" tabindex="-1">Есть опасность для людей?</h2><p class="step-help">При угрозе жизни сначала звоните 112. Демо-заявка не заменяет экстренный вызов.</p>
+            <fieldset class="choices"><legend class="sr-only">Опасность для людей</legend>
+              <label class="choice"><input type="radio" name="danger" value="да"><span class="choice-symbol" aria-hidden="true">!</span><span>Да, нужна помощь сейчас</span><span class="choice-check" aria-hidden="true"></span></label>
+              <label class="choice"><input type="radio" name="danger" value="нет"><span class="choice-symbol" aria-hidden="true">✓</span><span>Нет, непосредственной угрозы нет</span><span class="choice-check" aria-hidden="true"></span></label>
+              <label class="choice"><input type="radio" name="danger" value="не знаю"><span class="choice-symbol" aria-hidden="true">?</span><span>Не знаю</span><span class="choice-check" aria-hidden="true"></span></label>
+            </fieldset>
+          </section>
 
-    <section id="mineTab" class="tab-panel" aria-label="Мои заявки">
-      <div class="section-title"><span>02</span><div><h2>Мои заявки</h2><p>История и текущий статус</p></div></div>
-      <button id="refreshButton" class="refresh" type="button">↻ Обновить статусы</button>
-      <div id="myTickets" class="ticket-list">Загружаем…</div>
-    </section>
-  </main>
+          <section class="step" data-step="3" aria-labelledby="stepTitle3" hidden>
+            <div class="step-icon" aria-hidden="true">04</div><h2 id="stepTitle3" tabindex="-1">Проверим тему обращения</h2><p class="step-help">Мы предложим категорию. Если она не подходит, выберите другую.</p>
+            <label class="field" for="category"><span>Категория проблемы</span><select id="category" required><option value="">Выберите категорию</option><option value="leak">Протечка</option><option value="lift">Лифт</option><option value="heating">Отопление и горячая вода</option><option value="entrance_electricity">Свет в общих зонах</option><option value="trash">Мусор</option><option value="yard">Двор</option></select></label>
+            <p id="categoryHint" class="field-hint" role="status">Определим тему после предыдущих ответов.</p>
+            <label id="territoryField" class="field" for="territory" hidden><span>Чья территория двора?</span><select id="territory"><option value="">Выберите</option><option value="территория дома">Территория дома</option><option value="городская">Городская территория</option><option value="не знаю">Не знаю</option></select><small>Если не знаете, уточните границы территории у диспетчера дома.</small></label>
+            <label id="trashField" class="field" for="trashContext" hidden><span>Что случилось с мусором?</span><select id="trashContext"><option value="">Выберите</option><option value="дом/двор">Мусор в доме или во дворе</option><option value="контейнеры">Не вывезены контейнеры</option><option value="не знаю">Не знаю точно</option></select></label>
+          </section>
+
+          <p id="stepError" class="step-error" role="alert" hidden></p>
+          <div class="wizard-actions"><button id="wizardBack" class="back-button" type="button" hidden>← Назад</button><button id="wizardNext" class="main-button" type="button">Продолжить <span aria-hidden="true">→</span></button></div>
+        </div>
+
+        <section id="routeScreen" class="route-screen" aria-labelledby="routeTitle" hidden>
+          <div class="result-heading"><span class="result-symbol" aria-hidden="true">✓</span><span class="eyebrow">МАРШРУТ ГОТОВ</span><h2 id="routeTitle" tabindex="-1">Куда обратиться</h2><p id="routeSummary"></p></div>
+          <div id="routeContent"></div>
+          <label class="upload route-upload" for="photo"><span class="upload-symbol" aria-hidden="true">＋</span><span class="upload-copy"><strong>Добавить фото к заявке</strong><small id="photoName">По желанию · JPG или PNG, до 3 МБ</small></span><input id="photo" type="file" accept="image/png,image/jpeg"><span class="upload-arrow" aria-hidden="true">↗</span></label>
+          <div class="result-actions"><button id="editAnswers" class="secondary-button" type="button">← Изменить ответы</button><button id="createButton" class="main-button" type="button">Создать демо-заявку <span aria-hidden="true">→</span></button></div>
+          <p id="routeMessage" class="step-error" role="alert" hidden></p>
+        </section>
+
+        <section id="successScreen" class="success-screen" aria-labelledby="successTitle" hidden>
+          <div class="success-mark" aria-hidden="true">✓</div><span class="eyebrow">ЗАЯВКА СОЗДАНА</span><h2 id="successTitle" tabindex="-1">Готово, заявка в демо-системе</h2><p id="successDescription"></p><div id="successId" class="success-id"></div>
+          <button id="goToTickets" class="main-button" type="button">Посмотреть статус <span aria-hidden="true">→</span></button><button id="startAgain" class="secondary-button" type="button">Создать ещё одну заявку</button>
+        </section>
+        <p class="disclaimer"><strong>Это демонстрация.</strong> Заявка сохраняется только здесь и не уходит в ЕДЦ, УК или городские службы. При реальной опасности звоните 112.</p>
+      </section>
+
+      <section id="mineTab" class="mine-screen" aria-label="Мои заявки" hidden>
+        <div id="ticketListScreen"><div class="section-head"><span class="eyebrow">ИСТОРИЯ ОБРАЩЕНИЙ</span><h1 id="ticketsTitle" tabindex="-1">Мои заявки</h1><p>Здесь видны статусы заявок в демо-системе.</p></div><button id="refreshButton" class="refresh-button" type="button">↻ Обновить статусы</button><div id="ticketsAnnounce" class="sr-only" role="status"></div><div id="myTickets" class="ticket-list">Загружаем заявки…</div></div>
+        <div id="ticketDetailScreen" hidden><button id="ticketBack" class="back-button" type="button">← К заявкам</button><div id="ticketDetail"></div></div>
+      </section>
+    </main>
+  </div>
+  <nav class="bottom-nav" aria-label="Разделы приложения"><div class="bottom-nav-inner"><button class="nav-button active" data-tab="new" type="button" aria-current="page"><span aria-hidden="true">＋</span>Новая заявка</button><button class="nav-button" data-tab="mine" type="button"><span aria-hidden="true">▤</span>Мои заявки</button></div></nav>
 </body>
 </html>

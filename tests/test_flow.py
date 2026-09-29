@@ -55,6 +55,31 @@ class FlowTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.service.create({"house_id": "demo_1", "text": "Во дворе сломаны качели"})
 
+    def test_mini_requires_answers_and_category_confirmation(self):
+        base = {"house_id": "demo_1", "text": "В подъезде не горит свет",
+                "answers": {"location": "подъезд", "danger": "нет"}}
+        with self.assertRaisesRegex(ValidationError, "Подтвердите тему"):
+            self.service.create(base, require_mini_answers=True)
+        base["answers"]["selected_category"] = "entrance_electricity"
+        self.assertEqual(self.service.create(base, require_mini_answers=True)["category"], "entrance_electricity")
+        base["answers"].pop("danger")
+        with self.assertRaisesRegex(ValidationError, "опасности"):
+            self.service.create(base, require_mini_answers=True)
+
+    def test_mini_requires_context_for_yard_and_trash(self):
+        yard = {"house_id": "demo_1", "text": "Во дворе не убрали снег",
+                "answers": {"location": "двор", "danger": "нет", "selected_category": "yard"}}
+        with self.assertRaisesRegex(ValidationError, "территори"):
+            self.service.create(yard, require_mini_answers=True)
+        yard["answers"]["territory_owner"] = "городская"
+        self.assertIn("gorod.mos.ru", self.service.create(yard, require_mini_answers=True)["route"]["recipient"])
+        trash = {"house_id": "demo_1", "text": "Мусор возле контейнеров",
+                 "answers": {"location": "двор", "danger": "нет", "selected_category": "trash"}}
+        with self.assertRaisesRegex(ValidationError, "мусором"):
+            self.service.create(trash, require_mini_answers=True)
+        trash["answers"]["trash_context"] = "контейнеры"
+        self.assertEqual(self.service.create(trash, require_mini_answers=True)["category"], "trash")
+
     def test_max_dialog_creates_one_ticket_on_retry(self):
         bot = MaxDialog(self.service, self.store)
         texts = ["/start", "1", "В подъезде не горит свет", "2", "нет", "да"]

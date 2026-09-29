@@ -28,8 +28,9 @@ MINI_TICKET_PATH = re.compile(r"^/api/max/mini/tickets/(M-[A-F0-9]{10})$")
 
 
 def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
-    store = TicketStore(Path(db_path or DATA / "demo.sqlite3"))
-    service = RequestService(store)
+    store_path = Path(db_path or DATA / "demo.sqlite3")
+    store = TicketStore(store_path)
+    service = RequestService(store, store_path.parent / "uploads")
     dialog = MaxDialog(service, store)
     max_client = MaxClient(max_token)
 
@@ -55,13 +56,13 @@ def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
             try:
                 size = int(self.headers.get("Content-Length", "0"))
             except ValueError as exc:
-                raise ValidationError("invalid Content-Length") from exc
+                raise ValidationError("Неверный размер запроса.") from exc
             if not 0 < size <= MAX_BODY:
-                raise ValidationError("JSON body must be 1–5 MB")
+                raise ValidationError("Данные заявки должны быть не больше 5 МБ.")
             try:
                 return json.loads(self.rfile.read(size))
             except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-                raise ValidationError("invalid JSON") from exc
+                raise ValidationError("Не удалось прочитать данные заявки.") from exc
 
         def _error(self, code, message):
             self._send(code, {"error": message})
@@ -89,6 +90,13 @@ def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
                 return self._send(200, {"ok": True, "city": "Москва", "model": "TF-IDF + LogisticRegression"})
             if path == "/api/houses":
                 return self._send(200, service.houses())
+            if path == "/api/max/mini/session":
+                try:
+                    user_id = self._mini_user()
+                except MaxWebAppAuthError as exc:
+                    return self._error(401, str(exc))
+                return self._send(200, {"mode": "preview" if user_id == "preview-user" else "max",
+                                        "notifications_available": user_id != "preview-user" and bool(max_client.token)})
             if path == "/api/max/mini/tickets" or MINI_TICKET_PATH.fullmatch(path):
                 try:
                     user_id = self._mini_user()
@@ -146,7 +154,8 @@ def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
                         user_id = self._mini_user()
                     except MaxWebAppAuthError as exc:
                         return self._error(401, str(exc))
-                    return self._send(201, service.create(payload, max_user_id=user_id))
+                    return self._send(201, service.create(payload, max_user_id=user_id,
+                                                          require_mini_answers=True))
                 if path == "/api/tickets":
                     if not self._legacy_ok():
                         return self._error(403, "admin key required")

@@ -65,8 +65,16 @@ class MaxWebAppTests(unittest.TestCase):
             self.assertIn("max-web-app.js", html)
             self.assertIn('id="myTickets"', html)
             payload = {"house_id": "demo_1", "text": "В подъезде не горит свет",
-                       "answers": {"location": "подъезд", "danger": "нет"}}
+                       "answers": {"location": "подъезд", "danger": "нет",
+                                   "selected_category": "entrance_electricity"}}
             signed = {"X-Max-Init-Data": signed_data(101)}
+            with self.assertRaises(urllib.error.HTTPError) as no_session:
+                request("/api/max/mini/session")
+            self.assertEqual(no_session.exception.code, 401)
+            self.assertEqual(request("/api/max/mini/session", headers=signed)[1]["mode"], "max")
+            with self.assertRaises(urllib.error.HTTPError) as expired:
+                request("/api/max/mini/session", headers={"X-Max-Init-Data": signed_data(101, int(time.time())-4000)})
+            self.assertEqual(expired.exception.code, 401)
             with self.assertRaises(urllib.error.HTTPError) as no_auth:
                 request("/api/max/mini/tickets", "POST", payload)
             self.assertEqual(no_auth.exception.code, 401)
@@ -116,8 +124,12 @@ class MaxWebAppTests(unittest.TestCase):
         url = f"http://127.0.0.1:{server.server_address[1]}/api/max/mini/tickets"
         headers = {"Content-Type": "application/json", "X-Mini-Preview": "1"}
         payload = {"house_id": "demo_1", "text": "В подъезде не горит свет",
-                   "answers": {"location": "подъезд", "danger": "нет"}}
+                   "answers": {"location": "подъезд", "danger": "нет",
+                               "selected_category": "entrance_electricity"}}
         try:
+            preview_session = urllib.request.Request(url.replace("/tickets", "/session"), headers=headers)
+            with urllib.request.urlopen(preview_session, timeout=5) as response:
+                self.assertEqual(json.load(response)["mode"], "preview")
             request = urllib.request.Request(url, data=json.dumps(payload).encode(),
                                              method="POST", headers=headers)
             with urllib.request.urlopen(request, timeout=5) as response:
