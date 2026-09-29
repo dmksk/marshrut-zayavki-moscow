@@ -50,7 +50,8 @@ def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
-            self.wfile.write(payload)
+            if self.command != "HEAD":
+                self.wfile.write(payload)
 
         def _json(self):
             try:
@@ -140,6 +141,9 @@ def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
                 file = WEB / static
                 return self._send(200, file.read_bytes(), mimetypes.guess_type(static)[0] or "text/plain")
             return self._error(404, "not found")
+
+        def do_HEAD(self):
+            return self.do_GET()
 
         def do_POST(self):
             path = self.path.split("?", 1)[0]

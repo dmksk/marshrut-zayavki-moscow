@@ -56,6 +56,14 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(changed["ticket"]["status"], "assigned")
         self.assertEqual(self.request("/api/summary")[1]["assigned"], 1)
 
+    def test_head_checks_public_page_without_body(self):
+        request = urllib.request.Request(self.base + "/mini", method="HEAD")
+        with urllib.request.urlopen(request, timeout=5) as response:
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.headers.get("Content-Type"), "text/html")
+            self.assertGreater(int(response.headers["Content-Length"]), 0)
+            self.assertEqual(response.read(), b"")
+
 
 if __name__ == "__main__":
     unittest.main()
