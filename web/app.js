@@ -88,7 +88,8 @@ function renderTicket(ticket) {
 
 async function loadDashboard() {
   try {
-    const [summary,tickets]=await Promise.all([api('/api/summary'),api('/api/tickets')]);
+    const headers={'X-Admin-Key':$('adminKey').value};
+    const [summary,tickets]=await Promise.all([api('/api/summary',{headers}),api('/api/tickets',{headers})]);
     $('statTotal').textContent=summary.total; $('statAccepted').textContent=summary.accepted;
     $('statAssigned').textContent=summary.assigned; $('statDone').textContent=summary.done;
     $('ticketList').innerHTML=tickets.length?tickets.map(ticket=>`<div class="ticket-row"><div><div class="ticket-row-title">${esc(ticket.id)} · ${esc(ticket.route.recipient_kind)}</div><div class="ticket-row-text">${esc(ticket.text)}</div><div class="ticket-row-meta">${esc(ticket.house_id)} · ${esc(new Date(ticket.created_at).toLocaleString('ru-RU'))}</div></div><div class="ticket-row-right"><span class="status-badge ${esc(ticket.status)}">${esc(statusText[ticket.status])}</span>${nextStatus[ticket.status]?`<button class="advance-btn" data-id="${esc(ticket.id)}" data-next="${nextStatus[ticket.status]}">Следующий статус →</button>`:''}</div></div>`).join(''):'<div class="list-empty">Пока заявок нет. Создайте первую во вкладке «Жителю».</div>';
@@ -132,6 +133,7 @@ async function init() {
   $('triageBtn').addEventListener('click',runTriage);
   $('createBtn').addEventListener('click',createTicket);
   $('refreshBtn').addEventListener('click',loadDashboard);
+  $('adminKey').addEventListener('change',loadDashboard);
   $('ticketList').addEventListener('click',event=>{const btn=event.target.closest('.advance-btn');if(btn)advance(btn.dataset.id,btn.dataset.next);});
   $('photo').addEventListener('change',()=>{$('fileName').textContent=$('photo').files[0]?.name||'Не выбрано';});
   $('chatSend').addEventListener('click',sendChat);

@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 
 from .max_bot import MaxClient, MaxDialog, STATUS_RU, event_key
+from .max_webapp import MaxWebAppAuthError, verify_init_data
 from .service import RequestService, ValidationError
 from .storage import TicketStore
 
@@ -23,13 +24,14 @@ WEB = ROOT / "web"
 DATA = ROOT / "data"
 MAX_BODY = 5 * 1024 * 1024
 TICKET_PATH = re.compile(r"^/api/tickets/(M-[A-F0-9]{10})(?:/(photo|status))?$")
+MINI_TICKET_PATH = re.compile(r"^/api/max/mini/tickets/(M-[A-F0-9]{10})$")
 
 
-def build_server(host="127.0.0.1", port=8000, db_path=None):
+def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
     store = TicketStore(Path(db_path or DATA / "demo.sqlite3"))
     service = RequestService(store)
     dialog = MaxDialog(service, store)
-    max_client = MaxClient()
+    max_client = MaxClient(max_token)
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "MarshrutZayavki/1.0"
@@ -69,18 +71,47 @@ def build_server(host="127.0.0.1", port=8000, db_path=None):
             candidate = self.headers.get("X-Admin-Key", "")
             return bool(secret) and hmac.compare_digest(candidate, secret)
 
+        def _mini_user(self):
+            if (self.headers.get("X-Mini-Preview") == "1"
+                    and os.environ.get("APP_PUBLIC") != "1"
+                    and not max_client.token
+                    and self.server.server_address[0] in {"127.0.0.1", "::1"}
+                    and self.client_address[0] in {"127.0.0.1", "::1"}):
+                return "preview-user"
+            return verify_init_data(self.headers.get("X-Max-Init-Data", ""), max_client.token)
+
+        def _legacy_ok(self):
+            return os.environ.get("APP_PUBLIC") != "1" or self._admin_ok()
+
         def do_GET(self):
             path = self.path.split("?", 1)[0]
             if path == "/api/health":
                 return self._send(200, {"ok": True, "city": "Москва", "model": "TF-IDF + LogisticRegression"})
             if path == "/api/houses":
                 return self._send(200, service.houses())
+            if path == "/api/max/mini/tickets" or MINI_TICKET_PATH.fullmatch(path):
+                try:
+                    user_id = self._mini_user()
+                except MaxWebAppAuthError as exc:
+                    return self._error(401, str(exc))
+                if path == "/api/max/mini/tickets":
+                    return self._send(200, store.list_for_max_user(user_id))
+                ticket = store.get(MINI_TICKET_PATH.fullmatch(path).group(1))
+                if ticket is None or ticket["max_user_id"] != user_id:
+                    return self._error(404, "ticket not found")
+                return self._send(200, ticket)
             if path == "/api/summary":
+                if not self._legacy_ok():
+                    return self._error(403, "admin key required")
                 return self._send(200, store.summary())
             if path == "/api/tickets":
+                if not self._legacy_ok():
+                    return self._error(403, "admin key required")
                 return self._send(200, store.list())
             match = TICKET_PATH.fullmatch(path)
             if match:
+                if not self._legacy_ok():
+                    return self._error(403, "admin key required")
                 ticket = store.get(match.group(1))
                 if ticket is None:
                     return self._error(404, "ticket not found")
@@ -93,7 +124,10 @@ def build_server(host="127.0.0.1", port=8000, db_path=None):
                         return self._error(404, "photo not found")
                     return self._send(200, photo.read_bytes(), mimetypes.guess_type(name)[0] or "image/jpeg")
                 return self._send(200, ticket)
-            static = {"/": "index.html", "/styles.css": "styles.css", "/app.js": "app.js"}.get(path)
+            static = {"/": "mini.html" if os.environ.get("APP_PUBLIC") == "1" else "index.html",
+                      "/admin": "index.html", "/mini": "mini.html",
+                      "/styles.css": "styles.css", "/app.js": "app.js",
+                      "/mini.css": "mini.css", "/mini.js": "mini.js"}.get(path)
             if static:
                 file = WEB / static
                 return self._send(200, file.read_bytes(), mimetypes.guess_type(static)[0] or "text/plain")
@@ -107,10 +141,18 @@ def build_server(host="127.0.0.1", port=8000, db_path=None):
                     raise ValidationError("JSON object expected")
                 if path == "/api/triage":
                     return self._send(200, service.classify(payload))
+                if path == "/api/max/mini/tickets":
+                    try:
+                        user_id = self._mini_user()
+                    except MaxWebAppAuthError as exc:
+                        return self._error(401, str(exc))
+                    return self._send(201, service.create(payload, max_user_id=user_id))
                 if path == "/api/tickets":
+                    if not self._legacy_ok():
+                        return self._error(403, "admin key required")
                     return self._send(201, service.create(payload))
                 if path == "/api/demo/max":
-                    if self.client_address[0] not in {"127.0.0.1", "::1"}:
+                    if os.environ.get("APP_PUBLIC") == "1" or self.client_address[0] not in {"127.0.0.1", "::1"}:
                         return self._error(403, "demo simulator is local only")
                     user_id = int(payload.get("user_id", 1001))
                     update = {"update_type": "message_created", "timestamp": int(time.time() * 1000),
@@ -177,7 +219,8 @@ def main():
     host = os.environ.get("APP_HOST", "127.0.0.1")
     port = int(os.environ.get("APP_PORT", "8000"))
     server = build_server(host, port)
-    print(f"Маршрут заявки: http://{host}:{port}")
+    print(f"Мини-приложение: http://{host}:{port}/mini")
+    print(f"Кабинет диспетчера: http://{host}:{port}/admin")
     if not os.environ.get("APP_ADMIN_KEY"):
         print("APP_ADMIN_KEY не задан: смена статуса через API отключена.")
     server.serve_forever()

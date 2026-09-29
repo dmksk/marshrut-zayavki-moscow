@@ -74,6 +74,10 @@ class TicketStore:
                     reply_text TEXT NOT NULL,
                     delivered INTEGER NOT NULL DEFAULT 0
                 );
+                CREATE TABLE IF NOT EXISTS bot_cursors (
+                    name TEXT PRIMARY KEY,
+                    marker TEXT NOT NULL
+                );
             """)
 
     @staticmethod
@@ -118,6 +122,13 @@ class TicketStore:
         limit = max(1, min(int(limit), 100))
         with self._connect() as db:
             rows = db.execute("SELECT * FROM tickets ORDER BY created_at DESC,id DESC LIMIT ?", (limit,))
+            return [self._row(row) for row in rows]
+
+    def list_for_max_user(self, user_id, limit=30):
+        limit = max(1, min(int(limit), 100))
+        with self._connect() as db:
+            rows = db.execute("""SELECT * FROM tickets WHERE max_user_id=?
+                ORDER BY created_at DESC,id DESC LIMIT ?""", (str(user_id), limit))
             return [self._row(row) for row in rows]
 
     def set_status(self, ticket_id, status):
@@ -169,3 +180,16 @@ class TicketStore:
     def mark_update_delivered(self, event_key):
         with self._connect() as db:
             db.execute("UPDATE processed_updates SET delivered=1 WHERE event_key=?", (event_key,))
+
+    def get_max_marker(self):
+        with self._connect() as db:
+            row = db.execute("SELECT marker FROM bot_cursors WHERE name='max'").fetchone()
+        return row[0] if row else None
+
+    def set_max_marker(self, marker):
+        marker = str(marker)
+        if not marker.isdecimal():
+            raise ValueError("MAX marker must be a non-negative integer")
+        with self._connect() as db:
+            db.execute("""INSERT INTO bot_cursors(name,marker) VALUES('max',?)
+                ON CONFLICT(name) DO UPDATE SET marker=excluded.marker""", (marker,))

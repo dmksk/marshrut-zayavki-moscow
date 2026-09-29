@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 from .service import RequestService, ValidationError
 from .storage import TicketStore
 
 API_ROOT = "https://platform-api2.max.ru"
+DEFAULT_MAX_CA = Path(__file__).resolve().parents[1] / "certs" / "russian_trusted_root_ca.pem"
 STATUS_RU = {"accepted": "принято", "assigned": "назначен исполнитель", "done": "выполнено"}
 
 
@@ -22,8 +25,34 @@ def event_key(update):
 
 
 class MaxClient:
-    def __init__(self, token=None):
+    def __init__(self, token=None, ca_bundle=None):
         self.token = token or os.environ.get("MAX_BOT_TOKEN")
+        self.ca_bundle = ca_bundle or os.environ.get("MAX_CA_BUNDLE") or str(DEFAULT_MAX_CA)
+        self.ssl_context = ssl.create_default_context()
+        if self.ca_bundle:
+            self.ssl_context.load_verify_locations(cafile=self.ca_bundle)
+
+    def _get(self, path, *, params=None, timeout=10):
+        if not self.token:
+            raise RuntimeError("MAX_BOT_TOKEN is not configured")
+        url = API_ROOT + path
+        if params:
+            url += "?" + urllib.parse.urlencode(params)
+        request = urllib.request.Request(url, headers={"Authorization": self.token})
+        with urllib.request.urlopen(request, timeout=timeout, context=self.ssl_context) as response:
+            return json.load(response)
+
+    def get_me(self):
+        return self._get("/me")
+
+    def get_subscriptions(self):
+        return self._get("/subscriptions")
+
+    def get_updates(self, *, marker=None, timeout=20):
+        params = {"limit": 100, "timeout": timeout, "types": "message_created,bot_started"}
+        if marker is not None:
+            params["marker"] = marker
+        return self._get("/updates", params=params, timeout=timeout + 10)
 
     def send_text(self, user_id, text):
         if not self.token:
@@ -33,7 +62,7 @@ class MaxClient:
             url, data=json.dumps({"text": text[:4000]}, ensure_ascii=False).encode("utf-8"),
             headers={"Authorization": self.token, "Content-Type": "application/json"}, method="POST",
         )
-        with urllib.request.urlopen(request, timeout=8) as response:
+        with urllib.request.urlopen(request, timeout=8, context=self.ssl_context) as response:
             return json.load(response)
 
 
@@ -105,6 +134,10 @@ class MaxDialog:
         if kind == "bot_started" or text.lower() in {"/start", "старт", "новая заявка"}:
             state = {"stage": "house"}
             self.store.put_session(user_id, state)
+            if os.environ.get("MAX_MINIAPP_URL"):
+                return user_id, ("Привет! Откройте мини-приложение кнопкой «Открыть» в чате: "
+                                 "там можно описать проблему, создать заявку и смотреть статус. "
+                                 "Если хотите пройти сценарий сообщениями, выберите демо-дом: 1 или 2.")
             return user_id, "Привет! Помогу направить заявку по ЖКХ Москвы. Выберите демо-дом: 1 или 2."
         if text.lower().startswith("/status "):
             ticket_id = text.split(maxsplit=1)[1].strip().upper()

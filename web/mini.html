@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3044">
+  <title>Маршрут заявки · MAX</title>
+  <link rel="stylesheet" href="/mini.css">
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
+  <script src="/mini.js" defer></script>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div class="brand"><span class="mark">М<span>→</span></span><div><strong>Маршрут заявки</strong><small>Москва · ЖКХ</small></div></div>
+      <span class="hero-label">МИНИ-ПРИЛОЖЕНИЕ В MAX</span>
+      <h1>Проблема дома?<br><em>Разберёмся.</em></h1>
+      <p>Ответьте на несколько вопросов — подскажем, куда обратиться и что сделать сейчас.</p>
+      <div class="hero-art" aria-hidden="true"><span>⌂</span><span>↗</span><span>✓</span></div>
+    </header>
+
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab active" data-tab="new" type="button">＋ Новая заявка</button>
+      <button class="tab" data-tab="mine" type="button">▤ Мои заявки</button>
+    </nav>
+
+    <div id="connection" class="connection" role="status">Проверяем подключение к MAX…</div>
+
+    <section id="newTab" class="tab-panel active" aria-label="Новая заявка">
+      <div class="section-title"><span>01</span><div><h2>Расскажите о проблеме</h2><p>Адреса и организации в этом демо вымышлены</p></div></div>
+      <label class="field"><span>Ваш дом</span><select id="house"></select></label>
+      <label class="field"><span>Что произошло?</span><textarea id="description" maxlength="1500" placeholder="Например: в подъезде не горит свет на третьем этаже"></textarea></label>
+      <div class="examples"><span>Примеры:</span><button type="button" data-example="В подъезде не горит свет на третьем этаже">Нет света</button><button type="button" data-example="Во дворе после снегопада не очистили дорожку">Снег во дворе</button></div>
+      <div class="field-pair">
+        <label class="field"><span>Где проблема?</span><select id="location"><option value="">Выберите</option><option>квартира</option><option>подъезд</option><option>двор</option><option>улица</option></select></label>
+        <label class="field"><span>Есть опасность?</span><select id="danger"><option value="">Выберите</option><option>нет</option><option>да</option><option>не знаю</option></select></label>
+      </div>
+      <label id="territoryField" class="field hidden"><span>Чья территория?</span><select id="territory"><option value="">Выберите</option><option value="территория дома">Дома</option><option value="городская">Городская</option><option value="не знаю">Не знаю</option></select></label>
+      <label id="categoryField" class="field hidden"><span>Уточните тему</span><select id="category"><option value="">Выберите</option><option value="leak">Протечка</option><option value="lift">Лифт</option><option value="heating">Отопление</option><option value="entrance_electricity">Свет в подъезде</option><option value="trash">Мусор</option><option value="yard">Двор</option></select></label>
+      <label class="photo" for="photo"><span class="photo-icon">＋</span><span><strong>Добавить фото</strong><small>По желанию · JPG или PNG, до 3 МБ</small></span><b id="photoName">→</b></label><input id="photo" type="file" accept="image/png,image/jpeg" hidden>
+      <button id="triageButton" class="button primary" type="button">Определить маршрут <span>↗</span></button>
+      <div id="message" class="message" role="status"></div>
+
+      <section id="route" class="route hidden" aria-live="polite"></section>
+      <button id="createButton" class="button create hidden" type="button">Создать демо-заявку <span>↗</span></button>
+      <section id="created" class="created hidden" aria-live="polite"></section>
+      <p class="footnote">Маршрут — подсказка. Заявка хранится только в демо-системе и не отправляется в ЕДЦ, УК или городские службы.</p>
+    </section>
+
+    <section id="mineTab" class="tab-panel" aria-label="Мои заявки">
+      <div class="section-title"><span>02</span><div><h2>Мои заявки</h2><p>История и текущий статус</p></div></div>
+      <button id="refreshButton" class="refresh" type="button">↻ Обновить статусы</button>
+      <div id="myTickets" class="ticket-list">Загружаем…</div>
+    </section>
+  </main>
+</body>
+</html>
