@@ -226,7 +226,7 @@ def build_server(host="127.0.0.1", port=8000, db_path=None, max_token=None):
 
 def main():
     host = os.environ.get("APP_HOST", "127.0.0.1")
-    port = int(os.environ.get("APP_PORT", "8000"))
+    port = int(os.environ.get("APP_PORT") or os.environ.get("PORT", "8000"))
     server = build_server(host, port)
     print(f"Мини-приложение: http://{host}:{port}/mini")
     print(f"Кабинет диспетчера: http://{host}:{port}/admin")

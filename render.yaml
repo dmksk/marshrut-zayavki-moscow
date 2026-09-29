@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: marshrut-zayavki-max-408
+    runtime: python
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m app.server
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_PUBLIC
+        value: "1"
+      - key: APP_HOST
+        value: 0.0.0.0
+      - key: MAX_BOT_TOKEN
+        sync: false
+      - key: APP_ADMIN_KEY
+        sync: false
+      - key: MAX_WEBHOOK_SECRET
+        sync: false
