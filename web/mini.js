@@ -13,6 +13,7 @@ function setConnection(message, kind='') {
 }
 
 async function request(path, options={}) {
+  if (window.miniPreviewRequest) return window.miniPreviewRequest(path, options);
   const headers = {...(options.headers || {})};
   if (options.body) headers['Content-Type'] = 'application/json';
   if (path.startsWith('/api/max/mini/')) {
@@ -256,7 +257,7 @@ async function createTicket() {
     const ticket = await request('/api/max/mini/tickets',{method:'POST',body:JSON.stringify(payload)});
     el('successId').textContent = ticket.id;
     el('successDescription').textContent = state.session === 'preview' ?
-      'Следите за статусом во вкладке «Мои заявки». В локальном предпросмотре сообщения бота не приходят.' :
+      'Следите за статусом во вкладке «Мои заявки». В предпросмотре сообщения бота не приходят.' :
       'Следите за статусом во вкладке «Мои заявки». При смене статуса бот MAX попробует прислать сообщение.';
     showScreen('success');
   } catch (error) { showError('routeMessage',error.message); }
@@ -312,7 +313,8 @@ async function openTicket(id) {
     el('ticketDetail').innerHTML = `<article class="detail-card"><span class="eyebrow">${escapeHtml(ticket.id)}</span><h1 id="detailTitle" tabindex="-1">${escapeHtml(categoryNames[ticket.category] || ticket.category)}</h1><span class="status-badge">${escapeHtml(statusNames[ticket.status] || ticket.status)}</span>
       <div class="detail-section"><h2>Описание</h2><p>${escapeHtml(ticket.text)}</p><p>${ticket.photo_path ? 'Фото приложено' : 'Фото не приложено'}</p></div>
       <div class="detail-section"><h2>Куда обратиться</h2><p>${escapeHtml(recipient.name)}</p>${recipient.href ? `<a class="route-link" href="${recipient.href}" ${recipient.href.startsWith('https:') ? 'data-open-external="true" target="_blank" rel="noopener noreferrer"' : ''}>${escapeHtml(recipient.action)}</a>` : ''}</div>
-      <div class="detail-section"><h2>История статусов</h2><ol class="event-list">${events}</ol></div></article>`;
+      <div class="detail-section"><h2>История статусов</h2><ol class="event-list">${events}</ol></div>
+      ${window.miniPreviewRequest && ticket.status !== 'done' ? `<button type="button" class="secondary-button preview-advance" data-preview-advance="${escapeHtml(ticket.id)}">Показать следующий демо-статус →</button>` : ''}</article>`;
     focusHeading('detailTitle');
   } catch (error) { el('ticketDetail').innerHTML = `<div class="error-state"><strong>Не удалось открыть заявку</strong><p>${escapeHtml(error.message)}</p></div>`; }
 }
@@ -378,7 +380,7 @@ async function verifySession() {
     const session = await request('/api/max/mini/session');
     state.session = session.mode;
     setConnection(session.mode === 'preview' ?
-      'Локальный предпросмотр · заявки и статусы только в демо-системе.' :
+      (window.miniPreviewRequest ? 'Предпросмотр · данные только в этом браузере.' : 'Локальный демо-режим · без уведомлений MAX.') :
       'Аккаунт MAX подтверждён · заявки будут привязаны к вам.', 'verified');
   } catch (error) {
     state.session = 'invalid';
@@ -442,6 +444,18 @@ function bindEvents() {
     if (event.target.closest('#retryTickets')) loadTickets();
   });
   el('ticketBack').addEventListener('click',closeTicket);
+  el('ticketDetail').addEventListener('click',async event => {
+    const id = event.target.closest('[data-preview-advance]')?.dataset.previewAdvance;
+    if (!id || !window.miniPreviewRequest) return;
+    event.target.disabled = true;
+    try {
+      await request(`/api/max/mini/tickets/${encodeURIComponent(id)}/advance`,{method:'POST'});
+      await openTicket(id);
+      await loadTickets();
+    } catch (error) {
+      el('ticketDetail').insertAdjacentHTML('beforeend',`<p class="step-error" role="alert">${escapeHtml(error.message)}</p>`);
+    }
+  });
   document.addEventListener('visibilitychange',() => { if (!document.hidden && state.tab === 'mine') loadTickets(); });
   setInterval(() => { if (!document.hidden && state.tab === 'mine' && el('ticketDetailScreen').hidden) loadTickets(); },15000);
   window.WebApp?.BackButton?.onClick?.(handleBack);
