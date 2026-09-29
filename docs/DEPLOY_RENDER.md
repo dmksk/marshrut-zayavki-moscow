@@ -1,14 +1,18 @@
 # Размещение Python-сервера для MAX
 
-Файл [`render.yaml`](../render.yaml) задаёт бесплатный Python Web Service на Render. Его публичный адрес `https://…onrender.com/mini` открывает настоящее мини-приложение с серверной ML-моделью и проверкой `initData`. Страница на GitHub Pages остаётся отдельным статическим предпросмотром.
+Сервис `marshrut-zayavki-max-408` уже размещён на Render Free. Его адрес [https://marshrut-zayavki-max-408.onrender.com/mini](https://marshrut-zayavki-max-408.onrender.com/mini) открывает мини-приложение с серверной ML-моделью и проверкой `initData`. Этот URL нужно передать организаторам для привязки к кнопке бота `@t408_hakaton_max_bot`. Без запуска из MAX обычный браузер правильно получает ошибку авторизации. Страница на GitHub Pages остаётся отдельным статическим предпросмотром.
+
+Проверка сервера: [https://marshrut-zayavki-max-408.onrender.com/api/health](https://marshrut-zayavki-max-408.onrender.com/api/health). Конфигурация для повторного развёртывания — [`render.yaml`](../render.yaml); [`.python-version`](../.python-version) закрепляет Python 3.12 для готовых колёс `scikit-learn`.
 
 ## Переменные окружения
 
-В панели Render сохраните `MAX_BOT_TOKEN` (токен выданного бота), случайный `APP_ADMIN_KEY` и случайный `MAX_WEBHOOK_SECRET`. Секреты не входят в `render.yaml` и Git. `APP_PUBLIC=1`, `APP_HOST=0.0.0.0`, команда запуска и проверка `/api/health` уже заданы в Blueprint. Приложение читает стандартный `PORT` Render.
+В сервисе Render уже сохранены `MAX_BOT_TOKEN` (токен выданного бота), случайный `APP_ADMIN_KEY`, случайный `MAX_WEBHOOK_SECRET` и `MAX_MINIAPP_URL`. Секреты не входят в `render.yaml` и Git. `APP_PUBLIC=1`, `APP_HOST=0.0.0.0`, команда запуска и проверка `/api/health` заданы в конфигурации. Приложение читает стандартный `PORT` Render. Ключ диспетчера можно посмотреть в настройках Environment сервиса Render; его не следует публиковать.
 
-После создания сервиса откройте `https://…onrender.com/api/health` и `https://…onrender.com/mini`. Адрес `/mini` передайте организаторам для привязки к боту. Пока привязка не выполнена, открытие в обычном браузере правильно покажет ошибку авторизации MAX.
+Проверены ответы публичного сервера: `/api/health` — HTTP 200, `/mini` и `/mini.js` — HTTP 200, `/api/max/mini/session` без данных запуска — HTTP 401. Привязку URL и полноценный запуск внутри MAX нужно выполнить отдельно.
 
-Для текстового диалога бота настройте подписку MAX на `https://…onrender.com/webhook/max` с событиями `message_created` и `bot_started`, указав тот же `MAX_WEBHOOK_SECRET`. Приём сообщений через webhook не нужен для создания заявки в мини-приложении; сообщения о смене статуса отправляются исходящим API-вызовом. [Требования MAX к webhook](https://dev.max.ru/docs-api/methods/POST/subscriptions).
+Подписка MAX на `https://marshrut-zayavki-max-408.onrender.com/webhook/max` для событий `message_created` и `bot_started` уже создана и прочитана обратно через API. Webhook с неверным секретом отвечает HTTP 403, с верным — HTTP 200. Получение настоящего сообщения от пользователя ещё не проверено. Приём сообщений через webhook не нужен для создания заявки в мини-приложении; сообщения о смене статуса отправляются исходящим API-вызовом. [Требования MAX к webhook](https://dev.max.ru/docs-api/methods/POST/subscriptions).
+
+Сервис создан из публичного GitHub-репозитория без доступа Render к интеграции репозитория. После изменений в `main` проверьте новый деплой в Render и при необходимости запустите его вручную. Для демонстрации откройте [кабинет диспетчера](https://marshrut-zayavki-max-408.onrender.com/admin) и введите `APP_ADMIN_KEY` из Environment сервиса.
 
 ## Ограничение бесплатного режима
 
